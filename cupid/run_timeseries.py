@@ -25,8 +25,6 @@ Options:
 """
 from __future__ import annotations
 
-import os
-import shutil
 import logging
 
 import click
@@ -133,7 +131,7 @@ def run_timeseries(
     for case_index, case_name in enumerate(timeseries_params["case_name"]):
         case_hfc = HFCollection(global_params["CESM_output_dir"] + "/" + case_name, num_processes=num_processes)
         case_hfc = case_hfc.include(inclusive_path_filters).exclude("*/proc/*")
-        
+
         for comp_name in component_run_flags.keys():
             if not component_run_flags[comp_name]:
                 continue
@@ -143,9 +141,9 @@ def run_timeseries(
                 case_hfc = case_hfc.include_years(
                     start_year=comp_config["start_years"][case_index],
                     end_year=comp_config["end_years"][case_index],
-                    glob_patterns=f"*{comp_config["hist_str"]}*"
+                    glob_patterns=f"*{comp_config["hist_str"]}*",
                 )
-        
+
         case_hfc = case_hfc.slice_groups(slice_size_years=5)
         case_tsc = TSCollection(case_hfc, ts_output_dir, num_processes=num_processes)
 
@@ -160,9 +158,11 @@ def run_timeseries(
                 # This may introduce some latency and prevents parallelism (okay for now).
                 if len(target_tsc) == 0:
                     head_dir = global_params["CESM_output_dir"] + "/" + case_name
-                    logger.warning(f"No history files found for '{variable_name}' in '{head_dir}' matching '{path_glob}'")
+                    logger.warning(
+                        f"No history files found for '{variable_name}' in '{head_dir}' matching '{path_glob}'",
+                    )
                 else:
-                    gents_paths = target_tsc.execute() # Generate time series for this target variable.
+                    target_tsc.execute()  # Generate time series for this target variable.
 
     return None
 
